@@ -67,8 +67,10 @@ namespace des{
         21, 10,  3, 24
     };
 
+    const uint8_t S1[4][]
+
     uint64_t left_shift(uint64_t key, int shift) {
-        // 左シフトを行うsssssssssssssssssssssssssssss
+        // 左シフトを行う
         return ((key << shift) | (key >> (28 - shift))) & 0x0FFFFFFF;
     }
     std::vector<uint64_t> generate_subkeys(uint64_t subkey){
@@ -77,7 +79,6 @@ namespace des{
         uint64_t c = (key56 >> 28) & 0x0FFFFFFF; // 左半分
         uint64_t d = key56 & 0x0FFFFFFF; // 右半分
         uint8_t shift_schedule[16] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 1};
-                                    //1  2   3  4   5   6   7   8   9  10 11 12 13 14 15 16
 
         for (int i = 0; i < 16; ++i){
             c = left_shift(c, shift_schedule[i]);
@@ -90,7 +91,7 @@ namespace des{
         return subkeys;
 
     }
-    uint64_t DES::initial_permutation(uint64_t block) {
+    uint64_t initial_permutation(uint64_t block) {
         uint64_t result = 0;
         
         // 各ビット位置について転置を適用
@@ -108,12 +109,29 @@ namespace des{
         return result;
     }
 
+    uint64_t inverse_initial_permutation(uint64_t block) {
+        uint64_t result = 0;
+        
+        // 各ビット位置について逆転置を適用
+        for (int i = 0; i < 64; i++) {
+            // IP_inverseテーブルの値は1-64の範囲だが、ビット操作は0-63の範囲で行うため調整
+            uint8_t target_pos = IP_inverse[i];
+            
+            // targetの位置にビットを設定
+            uint64_t bit = (block >> target_pos) & 0x01;
+            result |= (bit << (63 - i));
+        }
+        
+        return result;
+    }
+
     uint64_t permute_pc1(uint64_t key64){
         uint64_t key56 = 0;
         for (int i = 0; i < 56; ++i) {
             // key64のPC1[i]ビット目をkey56のiビット目にセット
-            key56 <<= 1;
-            key56 |= (key64 >> (63 - PC1[i])) & 0x1;
+            uint8_t target_pos = PC1[i];
+            uint64_t bit = (key56 >> target_pos) & 0x1;
+            key56 |= (bit << (55 - i));
         }
         return key56;
     }
@@ -121,10 +139,67 @@ namespace des{
     uint64_t permute_pc2(uint64_t key56) {
         uint64_t key48 = 0;
         for (int i = 0; i < 48; ++i) {
-            // key56のPC2[i]ビット目をkey48のiビット目にセット
-            key48 <<= 1;
-            key48 |= (key56 >> (55 - PC2[i])) & 0x1;
+            uint8_t target_pos = PC2[i];
+            uint64_t bit = (key56 >> target_pos) & 0x1;
+            key48 |= (bit << (47 - i));
         }
         return key48;
+    }
+    uint64_t permute_E(uint64_t right) {
+        uint64_t expanded = 0;
+        for (int i = 0; i < 48; ++i) {
+            // rightのE[i]ビット目をexpandedのiビット目にセット
+            uint8_t target_pos = E[i];
+            uint8_t bit = (right >> target_pos) & 0x1;
+            expanded |= (bit << (47 - i));
+        }
+        return expanded;
+    }
+    
+    uint64_t permute_P(uint64_t right){
+        uint64_t permuted = 0;
+        for(int i = 0; i < 32; ++i) {
+            // rightのP[i]ビット目をpermutedのiビット目にセット
+            uint8_t target_pos = P[i];
+            uint64_t bit = (right >> target_pos) & 0x1;
+            permuted |= (bit << (31 - i));
+        }
+        return permuted;
+    }
+
+    uint64_t sbox_substitution(uint64_t input) {
+        // Sボックスの実装は省略
+        // ここではダミーの値を返す
+        return input; // 実際にはSボックスに基づく置換を行う必要があります
+    }
+
+    uint64_t round_function(uint64_t right, uint64_t subkey){
+        uint64_t r1 = permute_E(right); // 右半分を拡張
+        uint64_t r2 = r1^subkey; // サブキーとXOR
+        // Sボックスの適用（ここでは省略、実装が必要）  
+
+        uint64_t r3 = sbox_substitution(r2); // Sボックスによる置換
+
+
+    }
+
+    uint64_t encrypt_block(uint64_t block, std::vector<uint64_t> subkeys) {
+        // 初期置換
+        block = initial_permutation(block);
+        
+        // 分割
+        uint64_t left = (block >> 32) & 0xFFFFFFFF; // 左半分
+        uint64_t right = block & 0xFFFFFFFF; // 右半分
+        
+        // 16ラウンドの処理
+        for (int i = 0; i < 16; ++i) {
+           
+        }
+        
+        // 結合
+        uint64_t combined_block = (left << 32) | right;
+        
+        // 逆初期置換
+        return inverse_initial_permutation(combined_block);
     }
 }
