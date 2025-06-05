@@ -1,3 +1,5 @@
+#include "../include/encrypt.hpp"
+
 namespace encrypt{
     const uint8_t IP[64] = {
         57, 49, 41, 33, 25, 17, 9, 1,
@@ -42,7 +44,9 @@ namespace encrypt{
         18, 12, 29,  5,
         21, 10,  3, 24
     };
-    const uint8_t S[8][32] = {
+
+
+    const uint8_t S[8][64] = {
         {
             14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7,
             0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8,
@@ -155,7 +159,7 @@ namespace encrypt{
         uint64_t output = 0;
         for (int i = 0; i < 8; ++i) {
             uint8_t block = (input >> (6*i)) & 0x3F;
-            output = s[i][block]<< (4 * (7 - i)) | output;
+            output = S[i][block] << (4 * (7 - i)) | output;
         }
         return output; 
     }
@@ -176,15 +180,45 @@ namespace encrypt{
         uint64_t right = block & 0xFFFFFFFF; // 右半分
         
         // 16ラウンドの処理
-        for (int i = 0; i < 16; ++i) {
-           if(i != 1) {
-            
-           }
+        for (int n = 0; n < 16; ++n) {
+            uint64_t temp = round_function(right, subkeys[n]);
+            uint64_t left2 = left ^ temp; // 左半分とラウンド関数の結果をXOR
+            if(n != 15) {
+                left = right; // 左半分を右半分に移動
+                right = left2; // 新しい右半分を設定
+            }else {
+                left = left2; // 最後のラウンドでは左半分を更新
+            }
         }
         
         // 結合
         uint64_t combined_block = (left << 32) | right;
         
+        // 逆初期置換
+        return inverse_initial_permutation(combined_block);
+    }
+
+    uint64_t decrypt_block(uint64_t block, std::vector<uint64_t> subkeys){
+        // 初期置換
+        block = initial_permutation(block);
+
+        // 分割
+        uint64_t left = (block >> 32) & 0xFFFFFFFF; // 左半分
+        uint64_t right = block & 0xFFFFFFFF; // 右半分
+
+        // 16ラウンドの処理（サブキーは逆順で使用）
+        for (int n = 15; n >= 0; --n) {
+            uint64_t temp = round_function(right, subkeys[n]);
+            uint64_t right2 = left ^ temp; // 右半分とラウンド関数の結果をXOR
+            if(n != 0) {
+                left = right; // 左半分を右半分に移動
+                right = right2; // 新しい右半分を設定
+            } else {
+                right = right2; // 最後のラウンドでは右半分を更新
+            }
+        }
+        // 結合
+        uint64_t combined_block = (left << 32) | right;
         // 逆初期置換
         return inverse_initial_permutation(combined_block);
     }

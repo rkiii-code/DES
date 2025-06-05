@@ -1,3 +1,5 @@
+#include "../include/encrypt.hpp"
+
 namespace gensubkey{
     const uint8_t PC1[56] = {
         56, 48, 40, 32, 24, 16,  8,
