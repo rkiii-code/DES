@@ -1,13 +1,13 @@
-#ifndef ENCRYPT_HPP
-#define ENCRYPT_HPP
+#ifndef DES_HPP
+#define DES_HPP
 
 #include <vector>
 #include <string>
 #include <cstdint>
 
-namespace encrypt {
+namespace des {
 
-    class Encrypt {
+    class des {
         private:
             // 初期置換
             static const uint8_t IP[64];
@@ -35,4 +35,4 @@ namespace encrypt {
     }; 
 }
 
-#endif // ENCRYPT_HPP
+#endif // DES_HPP
