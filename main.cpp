@@ -2,13 +2,13 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include <iomanip>  // std::setw, std::setfillを使用するために必要
+#include <iomanip>  
 #include "include/des.hpp"
 
 int main(){
-    uint64_t key = 0x0000000000000000;  // 末尾の0を削除
+    uint64_t key = 0x0000000000000000; 
     std::vector<uint64_t> subkeys = des::generate_subkeys(key);
-    uint64_t plaintext = 0x0000000000000000;  // 末尾の0を削除
+    uint64_t plaintext = 0x0000000000000000;  
     uint64_t ciphertext = des::encrypt_block(plaintext, subkeys);
     uint64_t decrypted = des::decrypt_block(ciphertext, subkeys);
 
