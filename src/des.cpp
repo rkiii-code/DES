@@ -1,6 +1,7 @@
 #include "../include/des.hpp"
 
-namespace encrypt{
+namespace des{
+
     const uint8_t IP[64] = {
         57, 49, 41, 33, 25, 17, 9, 1,
         59, 51, 43, 35, 27, 19, 11, 3,
@@ -97,7 +98,9 @@ namespace encrypt{
         }    
     };
 
-
+    std::vector<uint64_t> generate_subkeys(uint64_t key) {
+        return gensubkey::generate_subkeys(key);
+    }
     uint64_t initial_permutation(uint64_t block) {
         uint64_t result = 0;
         
@@ -158,8 +161,10 @@ namespace encrypt{
         //入力は48bit 出力は32bit
         uint64_t output = 0;
         for (int i = 0; i < 8; ++i) {
-            uint8_t block = (input >> (6*i)) & 0x3F;
-            output = S[i][block] << (4 * (7 - i)) | output;
+            uint8_t b = (input >> (42 - i*6)) & 0x3F;
+            uint8_t row = ((b >> 5) << 1) | (b & 0x01);
+            uint8_t col = (b >> 1) & 0x0F;
+            output |= ((uint64_t)S[i][row*16 + col]) << (28 - i*4);
         }
         return output; 
     }
@@ -172,53 +177,45 @@ namespace encrypt{
     }
 
     uint64_t encrypt_block(uint64_t block, std::vector<uint64_t> subkeys) {
-        // 初期置換
+    // 初期置換
         block = initial_permutation(block);
         
         // 分割
-        uint64_t left = (block >> 32) & 0xFFFFFFFF; // 左半分
-        uint64_t right = block & 0xFFFFFFFF; // 右半分
+        uint64_t left = (block >> 32) & 0xFFFFFFFF; 
+        uint64_t right = block & 0xFFFFFFFF;
         
         // 16ラウンドの処理
         for (int n = 0; n < 16; ++n) {
-            uint64_t temp = round_function(right, subkeys[n]);
-            uint64_t left2 = left ^ temp; // 左半分とラウンド関数の結果をXOR
-            if(n != 15) {
-                left = right; // 左半分を右半分に移動
-                right = left2; // 新しい右半分を設定
-            }else {
-                left = left2; // 最後のラウンドでは左半分を更新
-            }
+            uint64_t temp = left;
+            left = right;
+            right = temp ^ round_function(right, subkeys[n]);
         }
         
-        // 結合
-        uint64_t combined_block = (left << 32) | right;
+        // 最後に左右を入れ替え（これが重要）
+        uint64_t combined_block = (right << 32) | left;
         
         // 逆初期置換
         return inverse_initial_permutation(combined_block);
     }
 
-    uint64_t decrypt_block(uint64_t block, std::vector<uint64_t> subkeys){
+    uint64_t decrypt_block(uint64_t block, std::vector<uint64_t> subkeys) {
         // 初期置換
         block = initial_permutation(block);
-
+        
         // 分割
-        uint64_t left = (block >> 32) & 0xFFFFFFFF; // 左半分
-        uint64_t right = block & 0xFFFFFFFF; // 右半分
-
-        // 16ラウンドの処理（サブキーは逆順で使用）
+        uint64_t left = (block >> 32) & 0xFFFFFFFF;
+        uint64_t right = block & 0xFFFFFFFF;
+        
+        // 16ラウンドの処理（サブキーは逆順）
         for (int n = 15; n >= 0; --n) {
-            uint64_t temp = round_function(right, subkeys[n]);
-            uint64_t right2 = left ^ temp; // 右半分とラウンド関数の結果をXOR
-            if(n != 0) {
-                left = right; // 左半分を右半分に移動
-                right = right2; // 新しい右半分を設定
-            } else {
-                right = right2; // 最後のラウンドでは右半分を更新
-            }
+            uint64_t temp = right;
+            right = left;
+            left = temp ^ round_function(right, subkeys[n]);
         }
-        // 結合
-        uint64_t combined_block = (left << 32) | right;
+        
+        // 最後に左右を入れ替え
+        uint64_t combined_block = (right << 32) | left;
+        
         // 逆初期置換
         return inverse_initial_permutation(combined_block);
     }

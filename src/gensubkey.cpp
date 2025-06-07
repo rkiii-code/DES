@@ -1,4 +1,4 @@
-#include "../include/encrypt.hpp"
+#include "../include/gensubkey.hpp"
 
 namespace gensubkey{
     const uint8_t PC1[56] = {
@@ -9,20 +9,19 @@ namespace gensubkey{
         62, 54, 46, 38, 30, 22, 14,
         6 , 61, 53, 45, 37, 29, 21,
         13,  5, 60, 52, 44, 36, 28,
-        20, 12,  4, 27, 19, 11,  4
+        20, 12,  4, 27, 19, 11,  3
     };
 
-    //aaa
 
     const uint8_t PC2[48] = {
-        13, 16, 11, 23,  0,  4, 
-         3, 27, 14,  5, 20,  9,
+        13, 16, 10, 23,  0,  4, 
+        2, 27, 14,  5, 20,  9,
         22, 18, 11,  3, 25,  7,
         15,  6, 26, 19, 12,  1,
         40, 51, 30, 36, 46, 54,
         29, 39, 50, 44, 32, 47,
         43, 48, 38, 55, 33, 52,
-        46, 41, 49, 35, 28, 31
+        45, 41, 49, 35, 28, 31
     };
 
     uint64_t left_shift(uint64_t key, int shift) {
@@ -35,7 +34,7 @@ namespace gensubkey{
         for (int i = 0; i < 56; ++i) {
             // key64のPC1[i]ビット目をkey56のiビット目にセット
             uint8_t target_pos = PC1[i];
-            uint64_t bit = (key56 >> target_pos) & 0x1;
+            uint64_t bit = (key64 >> target_pos) & 0x1;
             key56 |= (bit << (55 - i));
         }
         return key56;

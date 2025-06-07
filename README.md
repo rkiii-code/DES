@@ -5,9 +5,9 @@ DESについて理解を深めるためにC++で実装したもの．
 ## TODO
 
 - ~~サブ鍵生成 実装~~
-- 暗号化 実装
-- 復号化 実装
-
+- ~~暗号化 実装~~
+- ~~復号化 実装~~
+- バグ対応
 ## 参考
 
 - [DESのアルゴリズム](https://ja.wikipedia.org/wiki/Data_Encryption_Standard)

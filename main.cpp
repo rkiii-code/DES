@@ -2,9 +2,28 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <iomanip>  // std::setw, std::setfillを使用するために必要
 #include "include/des.hpp"
 
 int main(){
-    std::vector<uint8_t> key = {0x13, 0x34, 0x57, 0x79, 0x9B, 0xBC, 0xDF, 0xF1};
-    encrypt.set_key(key);
+    uint64_t key = 0x0000000000000000;  // 末尾の0を削除
+    std::vector<uint64_t> subkeys = des::generate_subkeys(key);
+    uint64_t plaintext = 0x0000000000000000;  // 末尾の0を削除
+    uint64_t ciphertext = des::encrypt_block(plaintext, subkeys);
+    uint64_t decrypted = des::decrypt_block(ciphertext, subkeys);
+
+    // 16進数出力のフォーマットを設定
+    std::cout << std::hex << std::setfill('0');
+    
+    std::cout << "Plaintext:  0x" << std::setw(16) << plaintext << std::endl;
+    std::cout << "Ciphertext: 0x" << std::setw(16) << ciphertext << std::endl;
+    std::cout << "Decrypted:  0x" << std::setw(16) << decrypted << std::endl;
+
+    if (decrypted == plaintext) {
+        std::cout << "Decryption successful!" << std::endl;
+    } else {
+        std::cout << "Decryption failed!" << std::endl;
+    }
+    
+    return 0;
 }

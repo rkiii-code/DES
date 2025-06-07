@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "*.csproj": "dotnetProject",
-        "string": "cpp",
-        "vector": "cpp"
-    }
-}
